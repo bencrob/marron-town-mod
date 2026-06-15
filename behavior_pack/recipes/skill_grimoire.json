@@ -1,0 +1,19 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "marrontown:skill_grimoire"
+    },
+    "tags": ["crafting_table"],
+    "pattern": ["GBG", "BHB", "GBG"],
+    "key": {
+      "B": { "item": "minecraft:book" },
+      "H": { "item": "minecraft:heart_of_the_sea" },
+      "G": { "item": "minecraft:gold_ingot" }
+    },
+    "result": {
+      "item": "marrontown:skill_grimoire",
+      "count": 1
+    }
+  }
+}

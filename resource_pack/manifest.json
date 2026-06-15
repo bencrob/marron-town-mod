@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "§6Marron Town §7(Resource)",
+    "description": "Texture de l'objet Grimoire des Compétences.",
+    "uuid": "3820ceca-ef5d-4bf4-9d25-1d963f64d23f",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "8de702f5-0b8c-4e9f-a3b8-6eac5c685a57",
+      "version": [1, 0, 0]
+    }
+  ]
+}

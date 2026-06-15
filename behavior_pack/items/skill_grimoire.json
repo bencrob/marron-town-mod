@@ -1,0 +1,20 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:item": {
+    "description": {
+      "identifier": "marrontown:skill_grimoire",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": "skill_grimoire",
+      "minecraft:hand_equipped": true,
+      "minecraft:glint": true,
+      "minecraft:display_name": {
+        "value": "§6Grimoire des Compétences"
+      }
+    }
+  }
+}
