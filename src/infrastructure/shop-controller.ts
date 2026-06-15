@@ -66,11 +66,13 @@ export class ShopController {
   /** Sélection courante : reseed au niveau monde si la rotation est périmée. */
   private currentOffers(now: number): ShopOffer[] {
     let seed = this.worldStore.getNumber(SEED_KEY);
-    const ts = this.worldStore.getNumber(TS_KEY) ?? 0;
+    // L'horodatage est stocké en SECONDES (les scoreboards sont des entiers 32 bits ;
+    // les millisecondes de Date.now() dépasseraient la borne ±2 147 483 647).
+    const ts = (this.worldStore.getNumber(TS_KEY) ?? 0) * 1000;
     if (seed === undefined || isRotationStale(now, ts)) {
       seed = Math.floor(Math.random() * 0x7fffffff);
       this.worldStore.setNumber(SEED_KEY, seed);
-      this.worldStore.setNumber(TS_KEY, now);
+      this.worldStore.setNumber(TS_KEY, Math.floor(now / 1000));
     }
     return seededPick(seed);
   }
