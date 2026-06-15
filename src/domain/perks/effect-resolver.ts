@@ -43,24 +43,23 @@ export interface Capabilities {
   readonly explosiveMining: boolean;
 }
 
-const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
-
 /** Effets passifs à (ré)appliquer ; doublons fusionnés en gardant l'amplificateur max. */
 export function resolvePassiveEffects(levels: Levels): PassiveEffect[] {
   const { agility: ag, attack: at, defense: de, mining: mi } = levels;
   const raw: PassiveEffect[] = [];
 
-  if (ag >= 1) raw.push({ effectId: 'speed', amplifier: clamp(Math.floor(ag / 10), 0, 5) });
-  if (ag >= 20) raw.push({ effectId: 'jump_boost', amplifier: 1 });
+  // Nerf modéré : vitesse plafonnée à II, paliers plus exigeants.
+  if (ag >= 10) raw.push({ effectId: 'speed', amplifier: ag >= 40 ? 1 : 0 });
+  if (ag >= 20) raw.push({ effectId: 'jump_boost', amplifier: 0 });
 
   if (at >= 10) raw.push({ effectId: 'haste', amplifier: at >= 40 ? 1 : 0 });
 
-  if (de >= 10) raw.push({ effectId: 'resistance', amplifier: clamp(Math.floor(de / 25), 0, 4) });
-  if (de >= 20) raw.push({ effectId: 'regeneration', amplifier: de >= 50 ? 1 : 0 });
+  if (de >= 10) raw.push({ effectId: 'resistance', amplifier: de >= 50 ? 1 : 0 });
+  if (de >= 20) raw.push({ effectId: 'regeneration', amplifier: 0 });
   if (de >= 40) raw.push({ effectId: 'absorption', amplifier: 0 });
   if (de >= 60) raw.push({ effectId: 'fire_resistance', amplifier: 0 });
 
-  if (mi >= 1) raw.push({ effectId: 'haste', amplifier: clamp(Math.floor(mi / 10), 0, 5) });
+  if (mi >= 10) raw.push({ effectId: 'haste', amplifier: mi >= 50 ? 1 : 0 });
 
   // Fusion par effet : amplificateur maximum.
   const byId = new Map<string, number>();
@@ -73,19 +72,19 @@ export function resolvePassiveEffects(levels: Levels): PassiveEffect[] {
 export function resolveCombatModifiers(levels: Levels): CombatModifiers {
   const { agility: ag, attack: at, defense: de } = levels;
   return {
-    meleeFlatBonus: at * 0.05,
-    critChance: at >= 50 ? 0.25 : 0,
-    critMultiplier: at >= 100 ? 2 : 1.5,
-    bleedChance: at >= 30 ? 0.2 : 0,
-    heavyKnockbackChance: at >= 20 ? 0.15 : 0,
+    meleeFlatBonus: at * 0.02,
+    critChance: at >= 50 ? 0.15 : 0,
+    critMultiplier: at >= 100 ? 1.75 : 1.5,
+    bleedChance: at >= 30 ? 0.1 : 0,
+    heavyKnockbackChance: at >= 20 ? 0.1 : 0,
     berserkerActive: at >= 60,
     executeThreshold: at >= 75 ? 0.15 : 0,
-    executeBonus: 0.5,
-    healBackReductionPct: Math.min(de, 9) * 0.01,
-    bastionShieldReductionPct: de >= 75 ? 0.95 : 0,
+    executeBonus: 0.25,
+    healBackReductionPct: Math.min(de, 5) * 0.01,
+    bastionShieldReductionPct: de >= 75 ? 0.6 : 0,
     secondWindActive: de >= 100,
-    fallDamageReductionPct: ag >= 50 ? 1 : ag >= 10 ? 0.2 : 0,
-    evasionChance: ag >= 60 ? 0.15 : 0,
+    fallDamageReductionPct: ag >= 100 ? 1 : ag >= 50 ? 0.5 : 0,
+    evasionChance: ag >= 60 ? 0.1 : 0,
     ghostDashInvuln: ag >= 100,
   };
 }

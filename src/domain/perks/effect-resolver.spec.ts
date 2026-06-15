@@ -16,49 +16,62 @@ const levels = (p: Partial<Record<'agility' | 'attack' | 'defense' | 'mining', n
 const amp = (fx: { effectId: string; amplifier: number }[], id: string) =>
   fx.find((e) => e.effectId === id)?.amplifier;
 
-describe('resolvePassiveEffects', () => {
+describe('resolvePassiveEffects (nerf modéré)', () => {
   test('aucun niveau → aucun effet', () => {
     expect(resolvePassiveEffects(levels({}))).toEqual([]);
   });
 
-  test('agilité 30 → speed amp 3 + jump_boost amp 1', () => {
+  test('agilité 30 → Speed I (amp 0) + Jump I (amp 0)', () => {
     const fx = resolvePassiveEffects(levels({ agility: 30 }));
-    expect(amp(fx, 'speed')).toBe(3);
-    expect(amp(fx, 'jump_boost')).toBe(1);
+    expect(amp(fx, 'speed')).toBe(0);
+    expect(amp(fx, 'jump_boost')).toBe(0);
   });
 
-  test('haste fusionné entre attaque et minage → amplificateur max', () => {
+  test('agilité 40 → Speed II (amp 1)', () => {
+    expect(amp(resolvePassiveEffects(levels({ agility: 40 })), 'speed')).toBe(1);
+  });
+
+  test('haste plafonné à I (amp 1) même attaque 40 + minage 100', () => {
     const fx = resolvePassiveEffects(levels({ attack: 40, mining: 100 }));
-    // attack>=40 → haste 1 ; mining 100 → haste min(10,5)=5 ; max = 5
-    expect(amp(fx, 'haste')).toBe(5);
+    expect(amp(fx, 'haste')).toBe(1);
     expect(fx.filter((e) => e.effectId === 'haste')).toHaveLength(1);
   });
 
-  test('résistance 80 → resistance/regen/absorption/fire_resistance', () => {
+  test('résistance 80 → Resist II (amp 1) + regen/absorption/fire', () => {
     const fx = resolvePassiveEffects(levels({ defense: 80 }));
-    expect(amp(fx, 'resistance')).toBe(3);
-    expect(amp(fx, 'regeneration')).toBe(1);
+    expect(amp(fx, 'resistance')).toBe(1);
+    expect(amp(fx, 'regeneration')).toBe(0);
     expect(amp(fx, 'absorption')).toBe(0);
     expect(amp(fx, 'fire_resistance')).toBe(0);
   });
 });
 
-describe('resolveCombatModifiers', () => {
-  test('attaque 100 → crit x2, bonus plat 5', () => {
+describe('resolveCombatModifiers (nerf modéré)', () => {
+  test('attaque 100 → crit ×1,75, bonus plat +2', () => {
     const m = resolveCombatModifiers(levels({ attack: 100 }));
-    expect(m.meleeFlatBonus).toBeCloseTo(5);
-    expect(m.critChance).toBe(0.25);
-    expect(m.critMultiplier).toBe(2);
+    expect(m.meleeFlatBonus).toBeCloseTo(2);
+    expect(m.critChance).toBe(0.15);
+    expect(m.critMultiplier).toBe(1.75);
   });
 
-  test('résistance 9 → 9 % heal-back, pas de second souffle', () => {
-    const m = resolveCombatModifiers(levels({ defense: 9 }));
-    expect(m.healBackReductionPct).toBeCloseTo(0.09);
-    expect(m.secondWindActive).toBe(false);
+  test('réduction fine plafonnée à 5 %', () => {
+    expect(resolveCombatModifiers(levels({ defense: 9 })).healBackReductionPct).toBeCloseTo(0.05);
+    expect(resolveCombatModifiers(levels({ defense: 3 })).healBackReductionPct).toBeCloseTo(0.03);
   });
 
-  test('agilité 50 → chute totalement annulée', () => {
-    expect(resolveCombatModifiers(levels({ agility: 50 })).fallDamageReductionPct).toBe(1);
+  test('chute : −50 % à 50, annulée à 100', () => {
+    expect(resolveCombatModifiers(levels({ agility: 50 })).fallDamageReductionPct).toBe(0.5);
+    expect(resolveCombatModifiers(levels({ agility: 100 })).fallDamageReductionPct).toBe(1);
+  });
+
+  test('évasion 10 % à 60', () => {
+    expect(resolveCombatModifiers(levels({ agility: 60 })).evasionChance).toBe(0.1);
+  });
+
+  test('Bastion 60 % et Second Souffle à 100 de résistance', () => {
+    const m = resolveCombatModifiers(levels({ defense: 100 }));
+    expect(m.bastionShieldReductionPct).toBe(0.6);
+    expect(m.secondWindActive).toBe(true);
   });
 });
 

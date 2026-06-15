@@ -55,6 +55,10 @@ export class FakeItemService implements ItemService {
     inv.set(itemId, (inv.get(itemId) ?? 0) + count);
     this.inventories.set(playerId, inv);
   }
+  readonly branded: { id: string; itemId: string }[] = [];
+  brandGrimoire(playerId: string, itemId: string): void {
+    this.branded.push({ id: playerId, itemId });
+  }
 }
 
 export class SpyMessenger implements Messenger {

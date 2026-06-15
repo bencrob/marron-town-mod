@@ -5,11 +5,14 @@
       "identifier": "marrontown:skill_grimoire"
     },
     "tags": ["crafting_table"],
-    "pattern": ["GBG", "BHB", "GBG"],
+    "pattern": ["SPG"],
     "key": {
-      "B": { "item": "minecraft:book" },
-      "H": { "item": "minecraft:heart_of_the_sea" },
-      "G": { "item": "minecraft:gold_ingot" }
+      "S": { "item": "minecraft:stick" },
+      "P": { "item": "minecraft:paper" },
+      "G": { "item": "minecraft:raw_gold" }
+    },
+    "unlock": {
+      "context": "AlwaysUnlocked"
     },
     "result": {
       "item": "marrontown:skill_grimoire",

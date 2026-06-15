@@ -1,4 +1,4 @@
-# 📖 Marron Town — Guide du joueur
+# 🌰 Marron Town — Guide du joueur
 
 Bienvenue ! **Marron Town** transforme ta partie de Minecraft en aventure **RPG** :
 ton XP te rapporte des **points de compétence**, tu les dépenses dans **4 arbres** pour
@@ -9,13 +9,13 @@ dans une **boutique** qui change tout le temps. 🎮
 
 ## 🚀 Bien démarrer
 
-1. **Fabrique le Grimoire des Compétences** 📕 sur une table de craft :
+1. **Fabrique le Grimoire des Compétences** 📕 sur une table de craft —
+   **bâton + papier + or brut**, alignés horizontalement :
 
    ```
-   🟨 📘 🟨        🟨 = Lingot d'or
-   📘 💧 📘        📘 = Livre
-   🟨 📘 🟨        💧 = Cœur de la mer
+   🪵 📄 🟡     →  📕 Grimoire
    ```
+   (🪵 Bâton · 📄 Papier · 🟡 Or brut, côte à côte sur une ligne)
 
 2. **Tiens le Grimoire en main et fais un clic-droit** (ou appui long sur mobile/manette).
    → Le menu s'ouvre. 🪄

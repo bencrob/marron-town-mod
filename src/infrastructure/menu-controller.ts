@@ -59,7 +59,7 @@ export class MenuController {
 
     for (const tree of SKILL_TREES) {
       const meta = SKILL_META[tree];
-      form.button(`${meta.icon} ${meta.label}  §7Niv. §a${state.levels[tree]}§7/100`);
+      form.button(`${meta.label}  §7Niv. §a${state.levels[tree]}§7/100`, meta.iconPath);
     }
     form.button('§7← Retour');
 

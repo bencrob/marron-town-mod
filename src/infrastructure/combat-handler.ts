@@ -37,7 +37,7 @@ export class CombatHandler {
 
     if (m.berserkerActive) {
       const hp = getHealth(attacker);
-      if (hp && hp.current / hp.max < 0.3) bonus += damage * 0.2;
+      if (hp && hp.current / hp.max < 0.3) bonus += damage * 0.1;
     }
     if (m.executeThreshold > 0) {
       const vh = getHealth(victim);

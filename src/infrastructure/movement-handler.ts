@@ -4,8 +4,8 @@ import { resolveCapabilities, resolveCombatModifiers } from '../domain/perks/eff
 import { getHealth } from './entity-util';
 
 const DASH_WINDOW_TICKS = 8; // ~0,4 s entre deux accroupissements
-const DASH_COOLDOWN_TICKS = 160; // 8 s
-const SECOND_WIND_COOLDOWN_TICKS = 1200; // 60 s
+const DASH_COOLDOWN_TICKS = 240; // 12 s (nerf)
+const SECOND_WIND_COOLDOWN_TICKS = 1800; // 90 s (nerf)
 
 /**
  * Perks d'input détectés par polling rapide (faute d'events d'input) : double saut,
@@ -42,7 +42,7 @@ export class MovementHandler {
       this.airJumpUsed.delete(id);
     } else if (enabled && jumping && !this.prevJumping.get(id) && !this.airJumpUsed.has(id)) {
       try {
-        player.applyKnockback(0, 0, 0, 0.8);
+        player.applyKnockback(0, 0, 0, 0.5);
         player.playSound('mob.bat.takeoff');
       } catch {
         /* ignore */
@@ -64,9 +64,9 @@ export class MovementHandler {
     if (now - last <= DASH_WINDOW_TICKS && ready) {
       const dir = player.getViewDirection();
       try {
-        player.applyKnockback(dir.x, dir.z, 1.5, 0.2);
+        player.applyKnockback(dir.x, dir.z, 1.2, 0.15);
         player.playSound('mob.enderdragon.flap');
-        if (invuln) player.addEffect('resistance', 30, { amplifier: 255, showParticles: false });
+        if (invuln) player.addEffect('resistance', 20, { amplifier: 255, showParticles: false });
       } catch {
         /* ignore */
       }
@@ -81,11 +81,10 @@ export class MovementHandler {
     const id = player.id;
     if (now < (this.secondWindReadyAt.get(id) ?? 0)) return;
     const hp = getHealth(player);
-    if (!hp || hp.current <= 0 || hp.current / hp.max > 0.15) return;
+    if (!hp || hp.current <= 0 || hp.current / hp.max > 0.1) return;
     try {
-      player.addEffect('absorption', 60, { amplifier: 3, showParticles: false });
-      player.addEffect('regeneration', 60, { amplifier: 2, showParticles: false });
-      player.addEffect('resistance', 60, { amplifier: 2, showParticles: false });
+      player.addEffect('absorption', 60, { amplifier: 0, showParticles: false });
+      player.addEffect('regeneration', 60, { amplifier: 0, showParticles: false });
       player.onScreenDisplay.setActionBar('§6⚡ Second souffle !');
     } catch {
       /* ignore */

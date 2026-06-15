@@ -33,13 +33,12 @@ export const PERK_TABLES: Readonly<Record<SkillTree, readonly PerkTier[]>> = {
   ],
   defense: [
     { level: 10, name: 'Peau Dure' },
-    { level: 20, name: 'Régénération Lente' },
-    { level: 30, name: 'Chute Amortie' },
+    { level: 20, name: 'Régénération' },
     { level: 40, name: 'Absorption' },
-    { level: 50, name: 'Régénération II' },
+    { level: 50, name: 'Peau Dure II' },
     { level: 60, name: 'Résistance au Feu' },
     { level: 75, name: 'Bastion' },
-    { level: 100, name: 'Immunité Momentanée' },
+    { level: 100, name: 'Second Souffle' },
   ],
   mining: [
     { level: 10, name: 'Hâte' },

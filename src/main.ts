@@ -82,6 +82,7 @@ world.afterEvents.itemUse.subscribe((event) => {
   if (event.itemStack.typeId !== GRIMOIRE_ID) return;
   const player = event.source;
   guard('grimoire-own', () => ensureGrimoire.onUse(player.id));
+  guard('grimoire-brand', () => items.brandGrimoire(player.id, GRIMOIRE_ID));
   system.run(() => {
     void openGrimoire(player);
   });

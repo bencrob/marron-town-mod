@@ -1,4 +1,4 @@
-#                                      Add-on RPG (Minecraft Bedrock 1.21+)
+# 🌰 Marron Town — Add-on RPG (Minecraft Bedrock 1.21+)
 
 Add-on **Minecraft Bedrock Edition** qui greffe un système de **progression RPG** sur l'XP
 vanilla : on gagne des **points de compétence**, on les investit dans **4 arbres** (Agilité,
@@ -18,7 +18,7 @@ commande chat. Multijoueur (Realm/serveur), 100 % vanilla-compatible.
 
 | Système | Comportement |
 |---|---|
-| **Grimoire des Compétences** | Objet craftable (4 livres + 1 cœur de la mer + 4 lingots d'or). Clic-droit → ouvre le menu. **Conservé à la mort** (rendu au respawn s'il a été perdu). |
+| **Grimoire des Compétences** | Objet craftable (**bâton + papier + or brut**, alignés). Clic-droit → ouvre le menu. **Nommé d'après son créateur** et **conservé à la mort** (rendu au respawn). Chaque joueur ne voit que sa propre fiche. |
 | **Points de compétence** | 1 point tous les **4 niveaux** Minecraft. Anti-farm : seuls les paliers *jamais atteints* comptent (se suicider pour remonter ne donne rien). |
 | **4 arbres (0–100)** | 1 point = 1 niveau. Effets passifs recalculés toutes les 2 s + paliers (10, 20, … 100). |
 | **Mort** | Niveaux et achats **conservés**, points **non-dépensés perdus**. |

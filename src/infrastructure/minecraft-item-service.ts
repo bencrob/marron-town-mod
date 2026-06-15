@@ -20,6 +20,17 @@ export class MinecraftItemService implements ItemService {
     container?.addItem(new ItemStack(itemId, count));
   }
 
+  brandGrimoire(playerId: string, itemId: string): void {
+    const player = findPlayer(playerId);
+    const container = player?.getComponent(EntityComponentTypes.Inventory)?.container;
+    if (!player || !container) return;
+    const slot = player.selectedSlotIndex;
+    const stack = container.getItem(slot);
+    if (!stack || stack.typeId !== itemId || stack.nameTag) return;
+    stack.nameTag = `§6Grimoire de ${player.name}`;
+    container.setItem(slot, stack);
+  }
+
   private container(playerId: string) {
     const player = findPlayer(playerId);
     const inventory = player?.getComponent(EntityComponentTypes.Inventory);
