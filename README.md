@@ -1,4 +1,4 @@
-# Marron Town — Add-on RPG (Minecraft Bedrock 1.21+)
+#                                      Add-on RPG (Minecraft Bedrock 1.21+)
 
 Add-on **Minecraft Bedrock Edition** qui greffe un système de **progression RPG** sur l'XP
 vanilla : on gagne des **points de compétence**, on les investit dans **4 arbres** (Agilité,
@@ -9,6 +9,8 @@ commande chat. Multijoueur (Realm/serveur), 100 % vanilla-compatible.
 > Conçu « craftsman » : la **logique de jeu est en TypeScript pur et testée** (Vitest), le moteur
 > Minecraft est cantonné à une couche d'infrastructure (architecture hexagonale). Le code est
 > transpilé en `scripts/main.js`, le seul fichier que Bedrock exécute.
+
+> 🎮 **Joueurs :** tout est expliqué dans le **[Guide du joueur](docs/README.md)** (`docs/`).
 
 ---
 
