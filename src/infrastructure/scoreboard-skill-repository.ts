@@ -74,6 +74,14 @@ export class ScoreboardSkillRepository implements SkillRepository {
     }
   }
 
+  getTheme(playerId: string): number {
+    return readScore('marrontown_theme', playerId) ?? 0;
+  }
+
+  setTheme(playerId: string, theme: number): void {
+    writeScore('marrontown_theme', playerId, theme);
+  }
+
   hasClaimedLoot(playerId: string, key: string): boolean {
     return (readScore(LOOT_OBJ(key), playerId) ?? 0) !== 0;
   }

@@ -13,6 +13,7 @@ import {
 import { averageLevel, spentPoints, type PlayerSkillState } from '../domain/skills/skill-state';
 import { levelUpSkill } from '../domain/points/spend-points';
 import { PERK_TABLES, LOOT_TIERS } from '../domain/perks/perk-tables';
+import { GRIMOIRE_VARIANTS, GRIMOIRE_IDS, MOSSY_VARIANT_ID } from '../domain/skills/grimoire-variants';
 import { renderBar, percent, formatHHMM, tierMark, SEPARATOR } from '../domain/ui/progress-bar';
 import { msUntilNextRotation } from '../domain/shop/shop-rotation';
 
@@ -33,21 +34,70 @@ export class MenuController {
     player.playSound(SOUND.open);
     const state = this.repo.load(player.id);
     const rotation = formatHHMM(msUntilNextRotation(this.clock.nowMs()));
+    const title = this.repo.getTheme(player.id) === 1 ? '§l§2🌿 Grimoire des Compétences' : '§l§6Grimoire des Compétences';
 
     const form = new ActionFormData()
-      .title('§l§6Grimoire des Compétences')
+      .title(title)
       .body(`${SEPARATOR}\n§e✦ ${state.unspentPoints} points disponibles\n§7Niveau moyen : §f${averageLevel(state)}§7/100`)
       .button('Compétences', 'textures/items/experience_bottle')
       .button(`Boutique §7(${rotation})`, 'textures/items/emerald')
       .button('Échange', 'textures/items/diamond')
+      .button('Customisation', 'textures/items/palette')
+      .button('Paramètres', 'textures/items/clock')
       .button('Ma Fiche', 'textures/items/paper');
 
     const res = await form.show(player);
     if (res.canceled || res.selection === undefined) return;
-    if (res.selection === 0) await this.openSkills(player);
-    else if (res.selection === 1) await this.openShopFn(player);
-    else if (res.selection === 2) await this.openExchangeFn(player);
-    else if (res.selection === 3) await this.openSheet(player);
+    const routes = [
+      () => this.openSkills(player),
+      () => this.openShopFn(player),
+      () => this.openExchangeFn(player),
+      () => this.openCustomisation(player),
+      () => this.openSettings(player),
+      () => this.openSheet(player),
+    ];
+    await routes[res.selection]?.();
+  }
+
+  async openCustomisation(player: Player): Promise<void> {
+    const form = new ActionFormData()
+      .title('§l§6Customisation — Couverture')
+      .body(`${SEPARATOR}\n§7Tiens ton grimoire en main et choisis son apparence.`);
+    for (const v of GRIMOIRE_VARIANTS) form.button(v.label, v.icon);
+    form.button('§7← Retour');
+
+    const res = await form.show(player);
+    if (res.canceled || res.selection === undefined) return;
+    if (res.selection >= GRIMOIRE_VARIANTS.length) {
+      await this.openMain(player);
+      return;
+    }
+    const variant = GRIMOIRE_VARIANTS[res.selection]!;
+    this.items.swapHeldVariant(player.id, GRIMOIRE_IDS, variant.id);
+    player.playSound(SOUND.upgrade);
+    player.sendMessage(`§aCouverture : ${variant.label}`);
+    await this.openCustomisation(player);
+  }
+
+  async openSettings(player: Player): Promise<void> {
+    const theme = this.repo.getTheme(player.id);
+    const form = new ActionFormData()
+      .title('§l§6Paramètres')
+      .body(`${SEPARATOR}\n§7Thème actuel : §f${theme === 1 ? 'Mossy Stone' : 'Défaut'}`)
+      .button(theme === 1 ? 'Désactiver Mossy Stone' : 'Activer Mossy Stone', 'textures/items/palette')
+      .button('§7← Retour');
+
+    const res = await form.show(player);
+    if (res.canceled || res.selection === undefined) return;
+    if (res.selection === 0) {
+      const next = theme === 1 ? 0 : 1;
+      this.repo.setTheme(player.id, next);
+      if (next === 1) this.items.swapHeldVariant(player.id, GRIMOIRE_IDS, MOSSY_VARIANT_ID);
+      player.playSound(SOUND.milestone);
+      await this.openSettings(player);
+    } else {
+      await this.openMain(player);
+    }
   }
 
   async openSkills(player: Player): Promise<void> {

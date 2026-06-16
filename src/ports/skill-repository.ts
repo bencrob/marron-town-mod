@@ -38,4 +38,8 @@ export interface SkillRepository {
   isChoiceMade(playerId: string, tree: string): boolean;
   setChoiceMade(playerId: string, tree: string, idx: number): void;
   clearChoices(playerId: string): void;
+
+  /** Thème d'interface (0 = défaut, 1 = Mossy Stone). */
+  getTheme(playerId: string): number;
+  setTheme(playerId: string, theme: number): void;
 }

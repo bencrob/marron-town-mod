@@ -17,6 +17,7 @@ import { AwardSkillPoints } from './application/award-skill-points';
 import { EnsureGrimoire, GRIMOIRE_ID } from './application/ensure-grimoire';
 import { HandleDeath } from './application/handle-death';
 import { ResetSkills, ERASER_ID } from './application/reset-skills';
+import { GRIMOIRE_IDS } from './domain/skills/grimoire-variants';
 
 // --- Composition root : instancie les adaptateurs et injecte dans les cas d'usage. ---
 const repo = new ScoreboardSkillRepository();
@@ -96,9 +97,9 @@ world.afterEvents.playerSpawn.subscribe((event) => {
 world.afterEvents.itemUse.subscribe((event) => {
   const player = event.source;
   const id = event.itemStack.typeId;
-  if (id === GRIMOIRE_ID) {
+  if (GRIMOIRE_IDS.includes(id)) {
     guard('grimoire-own', () => ensureGrimoire.onUse(player.id));
-    guard('grimoire-brand', () => items.brandGrimoire(player.id, GRIMOIRE_ID));
+    guard('grimoire-brand', () => items.brandGrimoire(player.id, GRIMOIRE_IDS));
     system.run(() => {
       void openGrimoire(player);
     });

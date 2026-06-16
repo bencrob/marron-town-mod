@@ -33,6 +33,13 @@ export class InMemorySkillRepository implements SkillRepository {
       this.rawChoices.delete(`${playerId}:${tree}`);
     }
   }
+  private readonly themes = new Map<string, number>();
+  getTheme(playerId: string): number {
+    return this.themes.get(playerId) ?? 0;
+  }
+  setTheme(playerId: string, theme: number): void {
+    this.themes.set(playerId, theme);
+  }
   save(playerId: string, state: PlayerSkillState): void {
     this.states.set(playerId, state);
   }
@@ -90,8 +97,17 @@ export class FakeItemService implements ItemService {
     this.inventories.set(playerId, inv);
   }
   readonly branded: { id: string; itemId: string }[] = [];
-  brandGrimoire(playerId: string, itemId: string): void {
-    this.branded.push({ id: playerId, itemId });
+  brandGrimoire(playerId: string, grimoireIds: readonly string[]): void {
+    this.branded.push({ id: playerId, itemId: grimoireIds[0] ?? '' });
+  }
+  hasAnyItem(playerId: string, itemIds: readonly string[]): boolean {
+    return itemIds.some((id) => this.hasItem(playerId, id));
+  }
+  swapHeldVariant(playerId: string, grimoireIds: readonly string[], toId: string): void {
+    const current = grimoireIds.find((id) => this.hasItem(playerId, id));
+    if (!current) return;
+    this.removeItem(playerId, current, 1);
+    this.giveItem(playerId, toId, 1);
   }
   giveEnchantedItem(playerId: string, itemId: string, _enchantId: string, _level: number): void {
     this.giveItem(playerId, itemId, 1);

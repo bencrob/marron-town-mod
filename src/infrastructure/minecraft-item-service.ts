@@ -25,15 +25,37 @@ export class MinecraftItemService implements ItemService {
     container?.addItem(new ItemStack(itemId, count));
   }
 
-  brandGrimoire(playerId: string, itemId: string): void {
+  brandGrimoire(playerId: string, grimoireIds: readonly string[]): void {
     const player = findPlayer(playerId);
     const container = player?.getComponent(EntityComponentTypes.Inventory)?.container;
     if (!player || !container) return;
     const slot = player.selectedSlotIndex;
     const stack = container.getItem(slot);
-    if (!stack || stack.typeId !== itemId || stack.nameTag) return;
+    if (!stack || !grimoireIds.includes(stack.typeId) || stack.nameTag) return;
     stack.nameTag = `§6Grimoire de ${player.name}`;
     container.setItem(slot, stack);
+  }
+
+  hasAnyItem(playerId: string, itemIds: readonly string[]): boolean {
+    const container = this.container(playerId);
+    if (!container) return false;
+    for (let slot = 0; slot < container.size; slot++) {
+      const id = container.getItem(slot)?.typeId;
+      if (id && itemIds.includes(id)) return true;
+    }
+    return false;
+  }
+
+  swapHeldVariant(playerId: string, grimoireIds: readonly string[], toId: string): void {
+    const player = findPlayer(playerId);
+    const container = player?.getComponent(EntityComponentTypes.Inventory)?.container;
+    if (!player || !container) return;
+    const slot = player.selectedSlotIndex;
+    const stack = container.getItem(slot);
+    if (!stack || !grimoireIds.includes(stack.typeId)) return;
+    const next = new ItemStack(toId, 1);
+    if (stack.nameTag) next.nameTag = stack.nameTag;
+    container.setItem(slot, next);
   }
 
   giveEnchantedItem(playerId: string, itemId: string, enchantId: string, level: number): void {

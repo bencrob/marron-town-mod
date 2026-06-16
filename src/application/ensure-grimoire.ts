@@ -1,5 +1,6 @@
 import { type ItemService } from '../ports/item-service';
 import { type SkillRepository } from '../ports/skill-repository';
+import { GRIMOIRE_IDS } from '../domain/skills/grimoire-variants';
 
 export const GRIMOIRE_ID = 'marrontown:skill_grimoire';
 
@@ -21,7 +22,7 @@ export class EnsureGrimoire {
 
   /** Appelé au respawn : rend le Grimoire si le joueur en possédait un et l'a perdu. */
   onRespawn(playerId: string): void {
-    if (this.repo.hasOwnedGrimoire(playerId) && !this.items.hasItem(playerId, GRIMOIRE_ID)) {
+    if (this.repo.hasOwnedGrimoire(playerId) && !this.items.hasAnyItem(playerId, GRIMOIRE_IDS)) {
       this.items.giveItem(playerId, GRIMOIRE_ID, 1);
     }
   }

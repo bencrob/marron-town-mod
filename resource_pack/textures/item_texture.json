@@ -7,6 +7,21 @@
     },
     "skill_eraser": {
       "textures": "textures/items/skill_eraser"
+    },
+    "grimoire_violet": {
+      "textures": "textures/items/grimoire_violet"
+    },
+    "grimoire_emerald": {
+      "textures": "textures/items/grimoire_emerald"
+    },
+    "grimoire_gold": {
+      "textures": "textures/items/grimoire_gold"
+    },
+    "grimoire_redstone": {
+      "textures": "textures/items/grimoire_redstone"
+    },
+    "grimoire_mossy": {
+      "textures": "textures/items/grimoire_mossy"
     }
   }
 }

@@ -35,6 +35,7 @@ dans une **boutique** qui change tout le temps. 🎮
 | [💱 Échange](echange.md) | Échanger des ressources contre des points (+ bonus quotidien) |
 | [🏪 Boutique](boutique.md) | La boutique quotidienne et comment en profiter |
 | [♻️ Reset (Gomme)](reset.md) | Tout recommencer + la règle du lait |
+| [🎨 Customisation](customisation.md) | Couverture du grimoire + thème Mossy Stone |
 
 ---
 
