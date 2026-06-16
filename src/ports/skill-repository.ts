@@ -27,4 +27,8 @@ export interface SkillRepository {
   /** Loot de palier déjà réclamé (donné une seule fois). */
   hasClaimedLoot(playerId: string, key: string): boolean;
   markClaimedLoot(playerId: string, key: string): void;
+
+  /** Dernier jour où le bonus d'échange quotidien a été réclamé (-1 = jamais). */
+  getExchangeBonusDay(playerId: string): number;
+  setExchangeBonusDay(playerId: string, day: number): void;
 }

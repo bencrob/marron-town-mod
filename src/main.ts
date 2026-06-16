@@ -7,6 +7,7 @@ import { MinecraftItemService } from './infrastructure/minecraft-item-service';
 import { MinecraftClock } from './infrastructure/minecraft-clock';
 import { MenuController } from './infrastructure/menu-controller';
 import { ShopController } from './infrastructure/shop-controller';
+import { ExchangeController } from './infrastructure/exchange-controller';
 import { PassiveApplier } from './infrastructure/passive-applier';
 import { CombatHandler } from './infrastructure/combat-handler';
 import { MovementHandler } from './infrastructure/movement-handler';
@@ -33,11 +34,23 @@ const combat = new CombatHandler(repo);
 const movement = new MovementHandler(repo);
 const mining = new MiningHandler(repo);
 
-// Menu principal et boutique se référencent mutuellement (navigation Retour).
-const menu: MenuController = new MenuController(repo, clock, items, (player) => shop.open(player));
+// Menu principal, boutique et échange se référencent mutuellement (navigation Retour).
+const menu: MenuController = new MenuController(
+  repo,
+  clock,
+  items,
+  (player) => shop.open(player),
+  (player) => exchange.open(player),
+);
 const shop: ShopController = new ShopController(
   repo,
   worldStore,
+  clock,
+  items,
+  (player) => menu.openMain(player),
+);
+const exchange: ExchangeController = new ExchangeController(
+  repo,
   clock,
   items,
   (player) => menu.openMain(player),

@@ -48,6 +48,13 @@ export class InMemorySkillRepository implements SkillRepository {
   markClaimedLoot(playerId: string, key: string): void {
     this.claimedLoot.add(`${playerId}:${key}`);
   }
+  private readonly exchBonusDay = new Map<string, number>();
+  getExchangeBonusDay(playerId: string): number {
+    return this.exchBonusDay.get(playerId) ?? -1;
+  }
+  setExchangeBonusDay(playerId: string, day: number): void {
+    this.exchBonusDay.set(playerId, day);
+  }
 }
 
 export class FakeItemService implements ItemService {
@@ -68,6 +75,16 @@ export class FakeItemService implements ItemService {
   }
   giveEnchantedItem(playerId: string, itemId: string, _enchantId: string, _level: number): void {
     this.giveItem(playerId, itemId, 1);
+  }
+  countItem(playerId: string, itemId: string): number {
+    return this.inventories.get(playerId)?.get(itemId) ?? 0;
+  }
+  removeItem(playerId: string, itemId: string, count: number): boolean {
+    const inv = this.inventories.get(playerId);
+    const have = inv?.get(itemId) ?? 0;
+    if (!inv || have < count) return false;
+    inv.set(itemId, have - count);
+    return true;
   }
 }
 

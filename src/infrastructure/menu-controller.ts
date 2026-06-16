@@ -26,6 +26,7 @@ export class MenuController {
     private readonly clock: Clock,
     private readonly items: ItemService,
     private readonly openShopFn: (player: Player) => Promise<void>,
+    private readonly openExchangeFn: (player: Player) => Promise<void>,
   ) {}
 
   async openMain(player: Player): Promise<void> {
@@ -38,13 +39,15 @@ export class MenuController {
       .body(`${SEPARATOR}\n§e✦ ${state.unspentPoints} points disponibles\n§7Niveau moyen : §f${averageLevel(state)}§7/100`)
       .button('Compétences', 'textures/items/experience_bottle')
       .button(`Boutique §7(${rotation})`, 'textures/items/emerald')
+      .button('Échange', 'textures/items/diamond')
       .button('Ma Fiche', 'textures/items/paper');
 
     const res = await form.show(player);
     if (res.canceled || res.selection === undefined) return;
     if (res.selection === 0) await this.openSkills(player);
     else if (res.selection === 1) await this.openShopFn(player);
-    else if (res.selection === 2) await this.openSheet(player);
+    else if (res.selection === 2) await this.openExchangeFn(player);
+    else if (res.selection === 3) await this.openSheet(player);
   }
 
   async openSkills(player: Player): Promise<void> {

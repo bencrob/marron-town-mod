@@ -65,6 +65,14 @@ export class ScoreboardSkillRepository implements SkillRepository {
     writeScore(LOOT_OBJ(key), playerId, 1);
   }
 
+  getExchangeBonusDay(playerId: string): number {
+    return readScore('marrontown_exch_day', playerId) ?? -1;
+  }
+
+  setExchangeBonusDay(playerId: string, day: number): void {
+    writeScore('marrontown_exch_day', playerId, day);
+  }
+
   isInitialized(playerId: string): boolean {
     return readScore(OBJ.maxLevel, playerId) !== undefined;
   }

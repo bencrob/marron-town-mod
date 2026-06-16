@@ -8,4 +8,8 @@ export interface ItemService {
   brandGrimoire(playerId: string, itemId: string): void;
   /** Donne un objet enchanté (paliers-loot). */
   giveEnchantedItem(playerId: string, itemId: string, enchantId: string, level: number): void;
+  /** Nombre total de cet item dans l'inventaire. */
+  countItem(playerId: string, itemId: string): number;
+  /** Retire `count` exemplaires si disponibles ; renvoie false sinon (rien retiré). */
+  removeItem(playerId: string, itemId: string, count: number): boolean;
 }

@@ -19,7 +19,7 @@ dans une **boutique** qui change tout le temps. 🎮
 
 2. **Tiens le Grimoire en main et fais un clic-droit** (ou appui long sur mobile/manette).
    → Le menu s'ouvre. 🪄
-3. Gagne de l'XP normalement : tous les **4 niveaux**, tu reçois **1 point** automatiquement. ✨
+3. Tu démarres avec **10 points** ; ensuite, tous les **5 niveaux** d'XP → **1 point** (jusqu'à un plafond, voir [Progression](progression.md)). ✨
 4. Ouvre le Grimoire → **Compétences** → choisis un arbre → dépense tes points !
 
 > 💡 Le Grimoire est **conservé quand tu meurs** : si tu le perds, tu le retrouves au réveil.
@@ -31,7 +31,8 @@ dans une **boutique** qui change tout le temps. 🎮
 | Page | Contenu |
 |---|---|
 | [✨ Progression](progression.md) | Comment gagner des points, et ce que tu perds en mourant |
-| [🌳 Compétences](competences.md) | Les 4 arbres et tous leurs pouvoirs |
+| [🌳 Compétences](competences.md) | Les 4 arbres, les choix d'effets et les objets offerts |
+| [💱 Échange](echange.md) | Échanger des ressources contre des points (+ bonus quotidien) |
 | [🏪 Boutique](boutique.md) | La boutique tournante et comment en profiter |
 
 ---

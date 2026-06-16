@@ -50,6 +50,36 @@ export class MinecraftItemService implements ItemService {
     container.addItem(stack);
   }
 
+  countItem(playerId: string, itemId: string): number {
+    const container = this.container(playerId);
+    if (!container) return 0;
+    let total = 0;
+    for (let slot = 0; slot < container.size; slot++) {
+      const item = container.getItem(slot);
+      if (item?.typeId === itemId) total += item.amount;
+    }
+    return total;
+  }
+
+  removeItem(playerId: string, itemId: string, count: number): boolean {
+    const container = this.container(playerId);
+    if (!container || this.countItem(playerId, itemId) < count) return false;
+    let remaining = count;
+    for (let slot = 0; slot < container.size && remaining > 0; slot++) {
+      const item = container.getItem(slot);
+      if (item?.typeId !== itemId) continue;
+      const take = Math.min(item.amount, remaining);
+      remaining -= take;
+      if (item.amount > take) {
+        item.amount -= take;
+        container.setItem(slot, item);
+      } else {
+        container.setItem(slot); // vide le slot
+      }
+    }
+    return true;
+  }
+
   private container(playerId: string) {
     const player = findPlayer(playerId);
     const inventory = player?.getComponent(EntityComponentTypes.Inventory);
