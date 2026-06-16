@@ -31,4 +31,9 @@ export interface SkillRepository {
   /** Dernier jour où le bonus d'échange quotidien a été réclamé (-1 = jamais). */
   getExchangeBonusDay(playerId: string): number;
   setExchangeBonusDay(playerId: string, day: number): void;
+
+  /** Choix d'effet (figé une fois fait, jusqu'au reset). */
+  isChoiceMade(playerId: string, tree: string): boolean;
+  setChoiceMade(playerId: string, tree: string, idx: number): void;
+  clearChoices(playerId: string): void;
 }

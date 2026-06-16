@@ -4,6 +4,9 @@
   "texture_data": {
     "skill_grimoire": {
       "textures": "textures/items/skill_grimoire"
+    },
+    "skill_eraser": {
+      "textures": "textures/items/skill_eraser"
     }
   }
 }

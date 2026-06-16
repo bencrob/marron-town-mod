@@ -16,6 +16,7 @@ import { InitPlayer } from './application/init-player';
 import { AwardSkillPoints } from './application/award-skill-points';
 import { EnsureGrimoire, GRIMOIRE_ID } from './application/ensure-grimoire';
 import { HandleDeath } from './application/handle-death';
+import { ResetSkills, ERASER_ID } from './application/reset-skills';
 
 // --- Composition root : instancie les adaptateurs et injecte dans les cas d'usage. ---
 const repo = new ScoreboardSkillRepository();
@@ -29,6 +30,7 @@ const initPlayer = new InitPlayer(repo);
 const awardPoints = new AwardSkillPoints(players, repo, messenger);
 const ensureGrimoire = new EnsureGrimoire(items, repo);
 const handleDeath = new HandleDeath(repo, messenger);
+const resetSkills = new ResetSkills(repo);
 const passives = new PassiveApplier(repo);
 const combat = new CombatHandler(repo);
 const movement = new MovementHandler(repo);
@@ -90,14 +92,32 @@ world.afterEvents.playerSpawn.subscribe((event) => {
   }
 });
 
-// Utilisation du Grimoire → ouverture différée du menu (évite l'état « UserBusy » de l'UI).
+// Utilisation d'un objet du mod (Grimoire → menu ; Gomme → reset).
 world.afterEvents.itemUse.subscribe((event) => {
-  if (event.itemStack.typeId !== GRIMOIRE_ID) return;
   const player = event.source;
-  guard('grimoire-own', () => ensureGrimoire.onUse(player.id));
-  guard('grimoire-brand', () => items.brandGrimoire(player.id, GRIMOIRE_ID));
-  system.run(() => {
-    void openGrimoire(player);
+  const id = event.itemStack.typeId;
+  if (id === GRIMOIRE_ID) {
+    guard('grimoire-own', () => ensureGrimoire.onUse(player.id));
+    guard('grimoire-brand', () => items.brandGrimoire(player.id, GRIMOIRE_ID));
+    system.run(() => {
+      void openGrimoire(player);
+    });
+  } else if (id === ERASER_ID) {
+    guard('reset-skills', () => {
+      const freed = resetSkills.run(player.id);
+      items.removeItem(player.id, ERASER_ID, 1);
+      player.playSound('random.totem');
+      player.sendMessage(`§d✦ Compétences réinitialisées — §e${freed}§d points rendus, choix déverrouillés.`);
+    });
+  }
+});
+
+// Lait : suspend les boosts du grimoire pendant 10 s (200 ticks).
+world.afterEvents.itemCompleteUse.subscribe((event) => {
+  if (event.itemStack.typeId !== 'minecraft:milk_bucket') return;
+  guard('milk', () => {
+    passives.suppressedUntilTick = system.currentTick + 200;
+    event.source.sendMessage('§7Lait bu — boosts du grimoire suspendus 10 s.');
   });
 });
 

@@ -13,8 +13,25 @@ export class InMemorySkillRepository implements SkillRepository {
   private readonly masks = new Map<string, number>();
   private readonly owned = new Set<string>();
 
+  private readonly rawChoices = new Map<string, number>();
   load(playerId: string): PlayerSkillState {
-    return this.states.get(playerId) ?? emptyState();
+    const base = this.states.get(playerId) ?? emptyState();
+    const idx = (tree: string) => ((this.rawChoices.get(`${playerId}:${tree}`) ?? 0) === 2 ? 1 : 0);
+    return {
+      ...base,
+      choices: { agility: idx('agility'), attack: idx('attack'), defense: idx('defense'), mining: idx('mining') },
+    };
+  }
+  isChoiceMade(playerId: string, tree: string): boolean {
+    return (this.rawChoices.get(`${playerId}:${tree}`) ?? 0) !== 0;
+  }
+  setChoiceMade(playerId: string, tree: string, idx: number): void {
+    this.rawChoices.set(`${playerId}:${tree}`, idx === 1 ? 2 : 1);
+  }
+  clearChoices(playerId: string): void {
+    for (const tree of ['agility', 'attack', 'defense', 'mining']) {
+      this.rawChoices.delete(`${playerId}:${tree}`);
+    }
   }
   save(playerId: string, state: PlayerSkillState): void {
     this.states.set(playerId, state);

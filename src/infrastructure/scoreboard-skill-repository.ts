@@ -33,11 +33,12 @@ export class ScoreboardSkillRepository implements SkillRepository {
         defense: readScore(OBJ.defense, playerId) ?? 0,
         mining: readScore(OBJ.mining, playerId) ?? 0,
       },
+      // Stockage brut 0 = non choisi (→ option A par défaut), 1 = A, 2 = B.
       choices: {
-        agility: readScore(CHOICE_OBJ('agility'), playerId) ?? 0,
-        attack: readScore(CHOICE_OBJ('attack'), playerId) ?? 0,
-        defense: readScore(CHOICE_OBJ('defense'), playerId) ?? 0,
-        mining: readScore(CHOICE_OBJ('mining'), playerId) ?? 0,
+        agility: this.choiceIndex('agility', playerId),
+        attack: this.choiceIndex('attack', playerId),
+        defense: this.choiceIndex('defense', playerId),
+        mining: this.choiceIndex('mining', playerId),
       },
       maxVanillaLevel: readScore(OBJ.maxLevel, playerId) ?? 0,
     };
@@ -50,11 +51,27 @@ export class ScoreboardSkillRepository implements SkillRepository {
     writeScore(OBJ.attack, playerId, state.levels.attack);
     writeScore(OBJ.defense, playerId, state.levels.defense);
     writeScore(OBJ.mining, playerId, state.levels.mining);
-    writeScore(CHOICE_OBJ('agility'), playerId, state.choices.agility);
-    writeScore(CHOICE_OBJ('attack'), playerId, state.choices.attack);
-    writeScore(CHOICE_OBJ('defense'), playerId, state.choices.defense);
-    writeScore(CHOICE_OBJ('mining'), playerId, state.choices.mining);
     writeScore(OBJ.maxLevel, playerId, state.maxVanillaLevel);
+    // Les choix ont leur propre cycle de vie (setChoiceMade/clearChoices), pas via save().
+  }
+
+  /** Index d'effet choisi (0/1) : 0 par défaut tant que non choisi. */
+  private choiceIndex(tree: string, playerId: string): number {
+    return (readScore(CHOICE_OBJ(tree), playerId) ?? 0) === 2 ? 1 : 0;
+  }
+
+  isChoiceMade(playerId: string, tree: string): boolean {
+    return (readScore(CHOICE_OBJ(tree), playerId) ?? 0) !== 0;
+  }
+
+  setChoiceMade(playerId: string, tree: string, idx: number): void {
+    writeScore(CHOICE_OBJ(tree), playerId, idx === 1 ? 2 : 1);
+  }
+
+  clearChoices(playerId: string): void {
+    for (const tree of ['agility', 'attack', 'defense', 'mining']) {
+      writeScore(CHOICE_OBJ(tree), playerId, 0);
+    }
   }
 
   hasClaimedLoot(playerId: string, key: string): boolean {

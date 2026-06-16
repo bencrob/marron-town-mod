@@ -101,9 +101,11 @@ export class MenuController {
       actions.push(() => this.tryUpgrade(player, tree, qty));
     }
     if (level >= choiceDef.tier) {
+      const made = this.repo.isChoiceMade(player.id, tree);
+      const cur = state.choices[tree];
       choiceDef.labels.forEach((label, idx) => {
-        const sel = state.choices[tree] === idx ? '§a✔ ' : '§7○ ';
-        form.button(`${sel}${label}`, 'textures/items/experience_bottle');
+        const prefix = made ? (cur === idx ? '§a✔ ' : '§8🔒 ') : '§e○ ';
+        form.button(`${prefix}${label}`, 'textures/items/experience_bottle');
         actions.push(() => this.setChoice(player, tree, idx));
       });
     }
@@ -147,10 +149,13 @@ export class MenuController {
   }
 
   private setChoice(player: Player, tree: SkillTree, idx: number): void {
-    const state = this.repo.load(player.id);
-    if (state.choices[tree] === idx) return;
-    this.repo.save(player.id, { ...state, choices: { ...state.choices, [tree]: idx } });
-    player.playSound(SOUND.upgrade);
+    if (this.repo.isChoiceMade(player.id, tree)) {
+      player.playSound(SOUND.error);
+      player.sendMessage('§cChoix verrouillé — utilise la Gomme pour le réinitialiser.');
+      return;
+    }
+    this.repo.setChoiceMade(player.id, tree, idx);
+    player.playSound(SOUND.milestone);
   }
 
   private tryUpgrade(player: Player, tree: SkillTree, qty: number): void {
