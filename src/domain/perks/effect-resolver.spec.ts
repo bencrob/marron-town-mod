@@ -5,87 +5,86 @@ import {
   resolveCapabilities,
 } from './effect-resolver';
 
-const levels = (p: Partial<Record<'agility' | 'attack' | 'defense' | 'mining', number>>) => ({
+const lv = (p: Partial<Record<'agility' | 'attack' | 'defense' | 'mining', number>>) => ({
   agility: 0,
   attack: 0,
   defense: 0,
   mining: 0,
   ...p,
 });
-
+const ch = (p: Partial<Record<'agility' | 'attack' | 'defense' | 'mining', number>>) => ({
+  agility: 0,
+  attack: 0,
+  defense: 0,
+  mining: 0,
+  ...p,
+});
 const amp = (fx: { effectId: string; amplifier: number }[], id: string) =>
   fx.find((e) => e.effectId === id)?.amplifier;
 
-describe('resolvePassiveEffects (nerf modéré)', () => {
+describe('resolvePassiveEffects (V2)', () => {
   test('aucun niveau → aucun effet', () => {
-    expect(resolvePassiveEffects(levels({}))).toEqual([]);
+    expect(resolvePassiveEffects(lv({}))).toEqual([]);
   });
 
-  test('agilité 30 → Speed I (amp 0) + Jump I (amp 0)', () => {
-    const fx = resolvePassiveEffects(levels({ agility: 30 }));
-    expect(amp(fx, 'speed')).toBe(0);
-    expect(amp(fx, 'jump_boost')).toBe(0);
+  test('mobilité : Speed I à 10, Speed II à 70', () => {
+    expect(amp(resolvePassiveEffects(lv({ agility: 10 })), 'speed')).toBe(0);
+    expect(amp(resolvePassiveEffects(lv({ agility: 70 })), 'speed')).toBe(1);
   });
 
-  test('agilité 40 → Speed II (amp 1)', () => {
-    expect(amp(resolvePassiveEffects(levels({ agility: 40 })), 'speed')).toBe(1);
+  test('résistance : choix régén (0) vs absorption (1) au palier 20', () => {
+    expect(amp(resolvePassiveEffects(lv({ defense: 20 }), ch({ defense: 0 })), 'regeneration')).toBe(0);
+    expect(amp(resolvePassiveEffects(lv({ defense: 20 }), ch({ defense: 1 })), 'absorption')).toBe(0);
   });
 
-  test('l’attaque ne donne plus de haste (bug corrigé) ; le minage oui (plafonné à I)', () => {
-    expect(amp(resolvePassiveEffects(levels({ attack: 100 })), 'haste')).toBeUndefined();
-    expect(amp(resolvePassiveEffects(levels({ mining: 100 })), 'haste')).toBe(1);
-  });
-
-  test('résistance 80 → Resist II (amp 1) + regen/absorption/fire', () => {
-    const fx = resolvePassiveEffects(levels({ defense: 80 }));
+  test('résistance 100 : cœurs + anti-feu + renfort du choix (amp 1)', () => {
+    const fx = resolvePassiveEffects(lv({ defense: 100 }), ch({ defense: 0 }));
     expect(amp(fx, 'resistance')).toBe(1);
-    expect(amp(fx, 'regeneration')).toBe(0);
-    expect(amp(fx, 'absorption')).toBe(0);
+    expect(amp(fx, 'health_boost')).toBe(0);
     expect(amp(fx, 'fire_resistance')).toBe(0);
+    expect(amp(fx, 'regeneration')).toBe(1);
+  });
+
+  test('minage : haste plafonné à I (amp 1) au 50', () => {
+    expect(amp(resolvePassiveEffects(lv({ mining: 50 })), 'haste')).toBe(1);
   });
 });
 
-describe('resolveCombatModifiers (nerf modéré)', () => {
-  test('attaque 100 → crit ×1,75, bonus plat +2', () => {
-    const m = resolveCombatModifiers(levels({ attack: 100 }));
-    expect(m.meleeFlatBonus).toBeCloseTo(2);
-    expect(m.critChance).toBe(0.15);
-    expect(m.critMultiplier).toBe(1.75);
+describe('resolveCombatModifiers (V2)', () => {
+  test('attaque 20 → poison toutes les 10 frappes', () => {
+    expect(resolveCombatModifiers(lv({ attack: 20 })).poisonEveryHits).toBe(10);
   });
-
-  test('réduction fine plafonnée à 5 %', () => {
-    expect(resolveCombatModifiers(levels({ defense: 9 })).healBackReductionPct).toBeCloseTo(0.05);
-    expect(resolveCombatModifiers(levels({ defense: 3 })).healBackReductionPct).toBeCloseTo(0.03);
+  test('attaque 40 → crit léger 10 %', () => {
+    expect(resolveCombatModifiers(lv({ attack: 40 })).critChance).toBe(0.1);
   });
-
-  test('chute : −50 % à 50, annulée à 100', () => {
-    expect(resolveCombatModifiers(levels({ agility: 50 })).fallDamageReductionPct).toBe(0.5);
-    expect(resolveCombatModifiers(levels({ agility: 100 })).fallDamageReductionPct).toBe(1);
+  test('attaque < 60 → pas de débuff', () => {
+    expect(resolveCombatModifiers(lv({ attack: 50 })).debuffEffect).toBeNull();
   });
-
-  test('évasion 10 % à 60', () => {
-    expect(resolveCombatModifiers(levels({ agility: 60 })).evasionChance).toBe(0.1);
-  });
-
-  test('Bastion 60 % et Second Souffle à 100 de résistance', () => {
-    const m = resolveCombatModifiers(levels({ defense: 100 }));
-    expect(m.bastionShieldReductionPct).toBe(0.6);
-    expect(m.secondWindActive).toBe(true);
+  test('attaque 100 choix 1 → Lenteur, chance renforcée', () => {
+    const m = resolveCombatModifiers(lv({ attack: 100 }), ch({ attack: 1 }));
+    expect(m.debuffEffect).toBe('slowness');
+    expect(m.debuffChance).toBe(0.25);
   });
 });
 
-describe('resolveCapabilities', () => {
-  test('minage 100 → vein miner étendu, fortune garantie, explosif', () => {
-    const c = resolveCapabilities(levels({ mining: 100 }));
+describe('resolveCapabilities (V2)', () => {
+  test('minage 100 choix Soie → vein étendu, soie, auto-fonte, détection, vision', () => {
+    const c = resolveCapabilities(lv({ mining: 100 }), ch({ mining: 0 }));
     expect(c.veinMiner).toBe(true);
     expect(c.veinMinerMax).toBe(20);
-    expect(c.fortuneChance).toBe(1);
-    expect(c.explosiveMining).toBe(true);
+    expect(c.silkTouchChance).toBe(0.4);
+    expect(c.fortuneExtra).toBe(false);
+    expect(c.autoSmelt).toBe(true);
+    expect(c.oreDetection).toBe(true);
+    expect(c.nightVisionMine).toBe(true);
   });
-
-  test('agilité 75 → double saut + dash', () => {
-    const c = resolveCapabilities(levels({ agility: 75 }));
-    expect(c.doubleJump).toBe(true);
-    expect(c.dash).toBe(true);
+  test('minage 50 choix Fortune → fortuneExtra, pas de soie', () => {
+    const c = resolveCapabilities(lv({ mining: 50 }), ch({ mining: 1 }));
+    expect(c.fortuneExtra).toBe(true);
+    expect(c.silkTouchChance).toBe(0);
+  });
+  test('mobilité 70 : Double Saut (choix 0) vs Dash (choix 1)', () => {
+    expect(resolveCapabilities(lv({ agility: 70 }), ch({ agility: 0 })).doubleJump).toBe(true);
+    expect(resolveCapabilities(lv({ agility: 70 }), ch({ agility: 1 })).dash).toBe(true);
   });
 });

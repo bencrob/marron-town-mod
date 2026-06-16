@@ -23,4 +23,8 @@ export interface SkillRepository {
   /** Index de rotation boutique vu par le joueur (pour réinitialiser ses achats). */
   getShopRotationSeen(playerId: string): number;
   setShopRotationSeen(playerId: string, rotation: number): void;
+
+  /** Loot de palier déjà réclamé (donné une seule fois). */
+  hasClaimedLoot(playerId: string, key: string): boolean;
+  markClaimedLoot(playerId: string, key: string): void;
 }

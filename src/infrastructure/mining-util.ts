@@ -27,8 +27,26 @@ export const ORE_DROP: Readonly<Record<string, string>> = {
   'minecraft:ancient_debris': 'minecraft:ancient_debris',
 };
 
+/** Auto-fonte : minerai → lingot fondu (sinon le drop normal s'applique). */
+export const ORE_SMELT: Readonly<Record<string, string>> = {
+  'minecraft:iron_ore': 'minecraft:iron_ingot',
+  'minecraft:deepslate_iron_ore': 'minecraft:iron_ingot',
+  'minecraft:gold_ore': 'minecraft:gold_ingot',
+  'minecraft:deepslate_gold_ore': 'minecraft:gold_ingot',
+  'minecraft:nether_gold_ore': 'minecraft:gold_ingot',
+  'minecraft:copper_ore': 'minecraft:copper_ingot',
+  'minecraft:deepslate_copper_ore': 'minecraft:copper_ingot',
+  'minecraft:ancient_debris': 'minecraft:netherite_scrap',
+};
+
 export function isOre(typeId: string): boolean {
   return typeId in ORE_DROP;
+}
+
+/** Item à dropper pour un minerai donné, selon l'auto-fonte. */
+export function dropFor(oreId: string, autoSmelt: boolean): string | undefined {
+  if (autoSmelt && oreId in ORE_SMELT) return ORE_SMELT[oreId];
+  return ORE_DROP[oreId];
 }
 
 /** Les 6 voisins orthogonaux d'une position de bloc. */

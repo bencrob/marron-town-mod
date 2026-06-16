@@ -1,53 +1,61 @@
 import { type SkillTree } from '../skills/skill-types';
 
 /**
- * DOMAINE PUR — paliers (milestones) par arbre, en DONNÉES.
- * Sert l'affichage (✔️/✖️) et la documentation ; les effets réels sont calculés
- * par effect-resolver. Les niveaux suivent le spec (équivalents reconçus si besoin).
+ * DOMAINE PUR — paliers (milestones) par arbre, en DONNÉES (V2).
+ * `kind` : 'effect' (défaut), 'loot' (donne un objet une fois), 'choice' (1 effet parmi 2).
+ * Les niveaux changent désormais **tous les 10 points**.
  */
+export type PerkKind = 'effect' | 'loot' | 'choice';
+
 export interface PerkTier {
   readonly level: number;
   readonly name: string;
+  readonly kind?: PerkKind;
 }
 
 export const PERK_TABLES: Readonly<Record<SkillTree, readonly PerkTier[]>> = {
   agility: [
-    { level: 10, name: 'Foulée Légère' },
-    { level: 20, name: 'Saut Amélioré' },
-    { level: 30, name: 'Double Saut' },
-    { level: 40, name: 'Vitesse Accrue II' },
-    { level: 50, name: 'Chute Amortie' },
-    { level: 60, name: 'Évasion' },
-    { level: 75, name: 'Dash' },
-    { level: 100, name: 'Fantôme Fugace' },
+    { level: 10, name: 'Vitesse (terre & nage)' },
+    { level: 30, name: 'Livre Ruée III', kind: 'loot' },
+    { level: 50, name: 'Endurance (moins de faim)' },
+    { level: 70, name: 'Double Saut / Dash', kind: 'choice' },
+    { level: 100, name: 'Renfort du choix' },
   ],
   attack: [
-    { level: 10, name: 'Rapidité de Frappe' },
-    { level: 20, name: 'Frappe Lourde' },
-    { level: 30, name: 'Saignement' },
-    { level: 40, name: 'Rapidité de Frappe II' },
-    { level: 50, name: 'Critique' },
-    { level: 60, name: 'Aura Berserker' },
-    { level: 75, name: 'Exécution' },
-    { level: 100, name: 'Coup Fatal' },
+    { level: 20, name: 'Poison toutes les 10 frappes' },
+    { level: 40, name: 'Critique léger (10 %)' },
+    { level: 60, name: 'Faiblesse / Lenteur', kind: 'choice' },
+    { level: 100, name: 'Renfort du choix' },
   ],
   defense: [
-    { level: 10, name: 'Peau Dure' },
-    { level: 20, name: 'Régénération' },
-    { level: 40, name: 'Absorption' },
-    { level: 50, name: 'Peau Dure II' },
-    { level: 60, name: 'Résistance au Feu' },
-    { level: 75, name: 'Bastion' },
-    { level: 100, name: 'Second Souffle' },
+    { level: 10, name: 'Résistance' },
+    { level: 20, name: 'Régén lente / Absorption', kind: 'choice' },
+    { level: 40, name: '+2–3 cœurs' },
+    { level: 60, name: 'Résistance au feu' },
+    { level: 100, name: 'Renfort du choix' },
   ],
   mining: [
     { level: 10, name: 'Hâte' },
     { level: 20, name: 'Vein Miner' },
-    { level: 30, name: 'Toucher de Soie' },
-    { level: 35, name: 'Fortune' },
-    { level: 50, name: 'Hâte II' },
-    { level: 60, name: 'Minage Explosif' },
-    { level: 75, name: 'Fortune II' },
-    { level: 100, name: 'Excavateur' },
+    { level: 30, name: 'Pioche en Fer (Solidité III)', kind: 'loot' },
+    { level: 40, name: 'Auto-fonte des minerais' },
+    { level: 50, name: 'Toucher de Soie / Fortune', kind: 'choice' },
+    { level: 60, name: 'Détection de minerais' },
+    { level: 80, name: 'Vision nocturne en mine' },
+    { level: 100, name: 'Vein Miner étendu (20)' },
   ],
 };
+
+/** Paliers-loot : niveau → (item, enchantement) à donner une fois. */
+export interface LootGrant {
+  readonly tree: SkillTree;
+  readonly level: number;
+  readonly itemId: string;
+  readonly enchantId: string;
+  readonly enchantLevel: number;
+}
+
+export const LOOT_TIERS: readonly LootGrant[] = [
+  { tree: 'mining', level: 30, itemId: 'minecraft:iron_pickaxe', enchantId: 'unbreaking', enchantLevel: 3 },
+  { tree: 'agility', level: 30, itemId: 'minecraft:book', enchantId: 'swift_sneak', enchantLevel: 3 },
+];

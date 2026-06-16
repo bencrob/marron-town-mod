@@ -6,4 +6,6 @@ export interface ItemService {
   giveItem(playerId: string, itemId: string, count?: number): void;
   /** Renomme l'objet tenu « Grimoire de [joueur] » s'il n'a pas encore de nom. */
   brandGrimoire(playerId: string, itemId: string): void;
+  /** Donne un objet enchanté (paliers-loot). */
+  giveEnchantedItem(playerId: string, itemId: string, enchantId: string, level: number): void;
 }

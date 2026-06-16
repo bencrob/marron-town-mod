@@ -11,16 +11,20 @@ export interface PlayerSkillState {
   readonly totalPointsEarned: number;
   /** Niveau de chaque arbre (0–100). */
   readonly levels: Readonly<Record<SkillTree, number>>;
+  /** Choix d'effet par arbre (0 ou 1), figé jusqu'au reset. */
+  readonly choices: Readonly<Record<SkillTree, number>>;
   /** Niveau Minecraft le plus haut jamais atteint (anti-farm). */
   readonly maxVanillaLevel: number;
 }
 
 export function emptyState(): PlayerSkillState {
   const levels = {} as Record<SkillTree, number>;
+  const choices = {} as Record<SkillTree, number>;
   for (const tree of SKILL_TREES) {
     levels[tree] = 0;
+    choices[tree] = 0;
   }
-  return { unspentPoints: 0, totalPointsEarned: 0, levels, maxVanillaLevel: 0 };
+  return { unspentPoints: 0, totalPointsEarned: 0, levels, choices, maxVanillaLevel: 0 };
 }
 
 /** Niveau moyen des 4 arbres (pour l'affichage du menu principal). */

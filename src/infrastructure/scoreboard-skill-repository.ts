@@ -16,6 +16,8 @@ const OBJ = {
 } as const;
 
 const SHOP_SLOT_OBJ = (slot: number): string => `marrontown_shop_b_${slot}`;
+const CHOICE_OBJ = (tree: string): string => `marrontown_choice_${tree}`;
+const LOOT_OBJ = (key: string): string => `marrontown_loot_${key}`;
 
 /**
  * ADAPTATEUR — persistance de l'état joueur via scoreboards (survit aux redémarrages).
@@ -31,6 +33,12 @@ export class ScoreboardSkillRepository implements SkillRepository {
         defense: readScore(OBJ.defense, playerId) ?? 0,
         mining: readScore(OBJ.mining, playerId) ?? 0,
       },
+      choices: {
+        agility: readScore(CHOICE_OBJ('agility'), playerId) ?? 0,
+        attack: readScore(CHOICE_OBJ('attack'), playerId) ?? 0,
+        defense: readScore(CHOICE_OBJ('defense'), playerId) ?? 0,
+        mining: readScore(CHOICE_OBJ('mining'), playerId) ?? 0,
+      },
       maxVanillaLevel: readScore(OBJ.maxLevel, playerId) ?? 0,
     };
   }
@@ -42,7 +50,19 @@ export class ScoreboardSkillRepository implements SkillRepository {
     writeScore(OBJ.attack, playerId, state.levels.attack);
     writeScore(OBJ.defense, playerId, state.levels.defense);
     writeScore(OBJ.mining, playerId, state.levels.mining);
+    writeScore(CHOICE_OBJ('agility'), playerId, state.choices.agility);
+    writeScore(CHOICE_OBJ('attack'), playerId, state.choices.attack);
+    writeScore(CHOICE_OBJ('defense'), playerId, state.choices.defense);
+    writeScore(CHOICE_OBJ('mining'), playerId, state.choices.mining);
     writeScore(OBJ.maxLevel, playerId, state.maxVanillaLevel);
+  }
+
+  hasClaimedLoot(playerId: string, key: string): boolean {
+    return (readScore(LOOT_OBJ(key), playerId) ?? 0) !== 0;
+  }
+
+  markClaimedLoot(playerId: string, key: string): void {
+    writeScore(LOOT_OBJ(key), playerId, 1);
   }
 
   isInitialized(playerId: string): boolean {

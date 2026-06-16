@@ -41,6 +41,13 @@ export class InMemorySkillRepository implements SkillRepository {
   setShopRotationSeen(playerId: string, rotation: number): void {
     this.rotationSeen.set(playerId, rotation);
   }
+  private readonly claimedLoot = new Set<string>();
+  hasClaimedLoot(playerId: string, key: string): boolean {
+    return this.claimedLoot.has(`${playerId}:${key}`);
+  }
+  markClaimedLoot(playerId: string, key: string): void {
+    this.claimedLoot.add(`${playerId}:${key}`);
+  }
 }
 
 export class FakeItemService implements ItemService {
@@ -58,6 +65,9 @@ export class FakeItemService implements ItemService {
   readonly branded: { id: string; itemId: string }[] = [];
   brandGrimoire(playerId: string, itemId: string): void {
     this.branded.push({ id: playerId, itemId });
+  }
+  giveEnchantedItem(playerId: string, itemId: string, _enchantId: string, _level: number): void {
+    this.giveItem(playerId, itemId, 1);
   }
 }
 

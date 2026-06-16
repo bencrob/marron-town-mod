@@ -2,31 +2,29 @@ import { type Player } from '@minecraft/server';
 import { ActionFormData } from '@minecraft/server-ui';
 import { type SkillRepository } from '../ports/skill-repository';
 import { type Clock } from '../ports/clock';
-import { SKILL_TREES, SKILL_META, MAX_SKILL_LEVEL, type SkillTree } from '../domain/skills/skill-types';
+import { type ItemService } from '../ports/item-service';
+import {
+  SKILL_TREES,
+  SKILL_META,
+  SKILL_CHOICE,
+  MAX_SKILL_LEVEL,
+  type SkillTree,
+} from '../domain/skills/skill-types';
 import { averageLevel, spentPoints, type PlayerSkillState } from '../domain/skills/skill-state';
 import { levelUpSkill } from '../domain/points/spend-points';
-import { PERK_TABLES } from '../domain/perks/perk-tables';
+import { PERK_TABLES, LOOT_TIERS } from '../domain/perks/perk-tables';
 import { renderBar, percent, formatHHMM, tierMark, SEPARATOR } from '../domain/ui/progress-bar';
 import { msUntilNextRotation } from '../domain/shop/shop-rotation';
 
-const SOUND = {
-  open: 'random.click',
-  upgrade: 'random.levelup',
-  milestone: 'random.totem',
-  error: 'note.bass',
-} as const;
-
+const SOUND = { open: 'random.click', upgrade: 'random.levelup', milestone: 'random.totem', error: 'note.bass' } as const;
 const BUY_QUANTITIES = [1, 5, 10] as const;
 
-/**
- * Flux des menus (server-ui). Présentation + navigation ; les règles (dépense de points)
- * proviennent du domaine pur testé. Toutes les méthodes sont async et awaited pour que les
- * erreurs remontent au try/catch de l'appelant.
- */
+/** Flux des menus (server-ui). Règles métier issues du domaine pur testé. */
 export class MenuController {
   constructor(
     private readonly repo: SkillRepository,
     private readonly clock: Clock,
+    private readonly items: ItemService,
     private readonly openShopFn: (player: Player) => Promise<void>,
   ) {}
 
@@ -37,12 +35,10 @@ export class MenuController {
 
     const form = new ActionFormData()
       .title('§l§6Grimoire des Compétences')
-      .body(
-        `${SEPARATOR}\n§e✦ ${state.unspentPoints} points disponibles\n§7Niveau moyen : §f${averageLevel(state)}§7/100`,
-      )
-      .button('§l⚔️ Compétences')
-      .button(`§l🏪 Boutique §r§7(${rotation})`)
-      .button('§l📊 Ma Fiche');
+      .body(`${SEPARATOR}\n§e✦ ${state.unspentPoints} points disponibles\n§7Niveau moyen : §f${averageLevel(state)}§7/100`)
+      .button('Compétences', 'textures/items/experience_bottle')
+      .button(`Boutique §7(${rotation})`, 'textures/items/emerald')
+      .button('Ma Fiche', 'textures/items/paper');
 
     const res = await form.show(player);
     if (res.canceled || res.selection === undefined) return;
@@ -65,20 +61,21 @@ export class MenuController {
 
     const res = await form.show(player);
     if (res.canceled || res.selection === undefined) return;
-    if (res.selection < SKILL_TREES.length) {
-      await this.openTree(player, SKILL_TREES[res.selection]!);
-    } else {
-      await this.openMain(player);
-    }
+    if (res.selection < SKILL_TREES.length) await this.openTree(player, SKILL_TREES[res.selection]!);
+    else await this.openMain(player);
   }
 
   async openTree(player: Player, tree: SkillTree): Promise<void> {
     const state = this.repo.load(player.id);
     const level = state.levels[tree];
     const meta = SKILL_META[tree];
+    const choiceDef = SKILL_CHOICE[tree];
 
     const tiers = PERK_TABLES[tree]
-      .map((t) => `${tierMark(level >= t.level)} Niv.${t.level} — ${t.name}`)
+      .map((t) => {
+        const tag = t.kind === 'loot' ? ' §6[loot]' : t.kind === 'choice' ? ' §b[choix]' : '';
+        return `${tierMark(level >= t.level)} Niv.${t.level} — ${t.name}${tag}`;
+      })
       .join('\n');
 
     const body = [
@@ -92,23 +89,31 @@ export class MenuController {
 
     const form = new ActionFormData().title(`§l§6${meta.label} — Niv. ${level}/100`).body(body);
 
-    // Boutons d'achat : libellé adapté si max atteint ou points insuffisants.
+    // Actions indexées (achats + choix), le « Retour » est le dernier bouton.
+    const actions: Array<() => void> = [];
     for (const qty of BUY_QUANTITIES) {
       if (level >= MAX_SKILL_LEVEL) form.button('§7[Max atteint]');
       else if (state.unspentPoints < qty) form.button(`§c[Points insuffisants] §7+${qty}`);
       else form.button(`§a+${qty} Niveau${qty > 1 ? 'x' : ''} §7(coût : ${qty} pt${qty > 1 ? 's' : ''})`);
+      actions.push(() => this.tryUpgrade(player, tree, qty));
+    }
+    if (level >= choiceDef.tier) {
+      choiceDef.labels.forEach((label, idx) => {
+        const sel = state.choices[tree] === idx ? '§a✔ ' : '§7○ ';
+        form.button(`${sel}${label}`, 'textures/items/experience_bottle');
+        actions.push(() => this.setChoice(player, tree, idx));
+      });
     }
     form.button('§7← Retour');
 
     const res = await form.show(player);
     if (res.canceled || res.selection === undefined) return;
-
-    if (res.selection < BUY_QUANTITIES.length) {
-      this.tryUpgrade(player, tree, BUY_QUANTITIES[res.selection]!);
-      await this.openTree(player, tree); // ré-affiche l'arbre mis à jour
-    } else {
+    if (res.selection >= actions.length) {
       await this.openSkills(player);
+      return;
     }
+    actions[res.selection]?.();
+    await this.openTree(player, tree);
   }
 
   async openSheet(player: Player): Promise<void> {
@@ -138,7 +143,13 @@ export class MenuController {
     if (!res.canceled) await this.openMain(player);
   }
 
-  /** Applique un achat de niveaux via le domaine pur + feedback sonore. */
+  private setChoice(player: Player, tree: SkillTree, idx: number): void {
+    const state = this.repo.load(player.id);
+    if (state.choices[tree] === idx) return;
+    this.repo.save(player.id, { ...state, choices: { ...state.choices, [tree]: idx } });
+    player.playSound(SOUND.upgrade);
+  }
+
   private tryUpgrade(player: Player, tree: SkillTree, qty: number): void {
     const before = this.repo.load(player.id);
     const result = levelUpSkill(before, tree, qty);
@@ -147,17 +158,24 @@ export class MenuController {
       return;
     }
     this.repo.save(player.id, result.state);
-    const crossedMilestone = this.crossedMilestone(before, result.state, tree);
-    player.playSound(crossedMilestone ? SOUND.milestone : SOUND.upgrade);
+    this.grantLoot(player, before, result.state, tree);
+    player.playSound(this.crossedMilestone(before, result.state, tree) ? SOUND.milestone : SOUND.upgrade);
   }
 
-  private crossedMilestone(
-    before: PlayerSkillState,
-    after: PlayerSkillState,
-    tree: SkillTree,
-  ): boolean {
-    return PERK_TABLES[tree].some(
-      (t) => before.levels[tree] < t.level && after.levels[tree] >= t.level,
-    );
+  /** Donne les objets de palier-loot nouvellement franchis (une seule fois). */
+  private grantLoot(player: Player, before: PlayerSkillState, after: PlayerSkillState, tree: SkillTree): void {
+    for (const loot of LOOT_TIERS) {
+      if (loot.tree !== tree) continue;
+      if (before.levels[tree] >= loot.level || after.levels[tree] < loot.level) continue;
+      const key = `${loot.tree}${loot.level}`;
+      if (this.repo.hasClaimedLoot(player.id, key)) continue;
+      this.items.giveEnchantedItem(player.id, loot.itemId, loot.enchantId, loot.enchantLevel);
+      this.repo.markClaimedLoot(player.id, key);
+      player.sendMessage(`§6✦ Palier ${loot.level} atteint — objet enchanté reçu !`);
+    }
+  }
+
+  private crossedMilestone(before: PlayerSkillState, after: PlayerSkillState, tree: SkillTree): boolean {
+    return PERK_TABLES[tree].some((t) => before.levels[tree] < t.level && after.levels[tree] >= t.level);
   }
 }

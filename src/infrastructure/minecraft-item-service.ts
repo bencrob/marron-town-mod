@@ -1,4 +1,9 @@
-import { ItemStack, EntityComponentTypes } from '@minecraft/server';
+import {
+  ItemStack,
+  EntityComponentTypes,
+  ItemComponentTypes,
+  EnchantmentTypes,
+} from '@minecraft/server';
 import { type ItemService } from '../ports/item-service';
 import { findPlayer } from './player-finder';
 
@@ -29,6 +34,20 @@ export class MinecraftItemService implements ItemService {
     if (!stack || stack.typeId !== itemId || stack.nameTag) return;
     stack.nameTag = `§6Grimoire de ${player.name}`;
     container.setItem(slot, stack);
+  }
+
+  giveEnchantedItem(playerId: string, itemId: string, enchantId: string, level: number): void {
+    const container = this.container(playerId);
+    if (!container) return;
+    const stack = new ItemStack(itemId, 1);
+    try {
+      const ench = stack.getComponent(ItemComponentTypes.Enchantable);
+      const type = EnchantmentTypes.get(enchantId);
+      if (ench && type) ench.addEnchantment({ type, level });
+    } catch {
+      /* enchantement incompatible : on donne l'objet nu */
+    }
+    container.addItem(stack);
   }
 
   private container(playerId: string) {

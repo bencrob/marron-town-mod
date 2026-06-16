@@ -6,93 +6,60 @@ import {
 } from '@minecraft/server';
 import { type SkillRepository } from '../ports/skill-repository';
 import { resolveCombatModifiers } from '../domain/perks/effect-resolver';
-import { critSurplus, isExecutable } from '../domain/combat/damage-math';
-import { getHealth, heal, hasShieldOffhand } from './entity-util';
+import { critSurplus } from '../domain/combat/damage-math';
 
 /**
- * Gère l'event entityHurt : bonus offensifs (côté attaquant) et réduction hybride
- * (côté victime). Les dégâts bonus utilisent la cause `override` pour ne pas reboucler.
+ * Combat V2 (arbre Attaque = effets, plus de gros dégâts) :
+ *  - Poison I toutes les 10 frappes réussies ;
+ *  - petit critique (×1,5) ;
+ *  - débuff au choix (Faiblesse/Lenteur) pendant 3–5 s, selon la chance.
+ * La défense passe entièrement par l'effet `resistance` (passifs), donc pas de volet victime.
  */
 export class CombatHandler {
+  private readonly hitCount = new Map<string, number>();
+
   constructor(private readonly repo: SkillRepository) {}
 
   handle(event: EntityHurtAfterEvent): void {
     const { hurtEntity, damageSource, damage } = event;
-    // Nos propres dégâts synthétiques : on ne les retraite pas (anti-récursion).
     if (damageSource.cause === EntityDamageCause.override || damage <= 0) return;
-    this.handleAttacker(damageSource.damagingEntity, damageSource.cause, hurtEntity, damage);
-    this.handleVictim(hurtEntity, damageSource.cause, damage);
-  }
+    const attacker = damageSource.damagingEntity;
+    if (!(attacker instanceof Player) || damageSource.cause !== EntityDamageCause.entityAttack) return;
 
-  private handleAttacker(
-    attacker: Entity | undefined,
-    cause: EntityDamageCause,
-    victim: Entity,
-    damage: number,
-  ): void {
-    if (!(attacker instanceof Player) || cause !== EntityDamageCause.entityAttack) return;
-    const m = resolveCombatModifiers(this.repo.load(attacker.id).levels);
+    const state = this.repo.load(attacker.id);
+    const m = resolveCombatModifiers(state.levels, state.choices);
 
-    let bonus = m.meleeFlatBonus;
-
-    if (m.berserkerActive) {
-      const hp = getHealth(attacker);
-      if (hp && hp.current / hp.max < 0.3) bonus += damage * 0.1;
+    // Poison toutes les N frappes.
+    if (m.poisonEveryHits > 0) {
+      const n = (this.hitCount.get(attacker.id) ?? 0) + 1;
+      this.hitCount.set(attacker.id, n);
+      if (n % m.poisonEveryHits === 0) this.tryEffect(hurtEntity, 'poison', 60, 0);
     }
-    if (m.executeThreshold > 0) {
-      const vh = getHealth(victim);
-      if (vh && isExecutable(vh.current, vh.max, m.executeThreshold)) bonus += damage * m.executeBonus;
-    }
+
+    // Critique léger : surplus de dégâts (cause override pour ne pas reboucler).
     if (m.critChance > 0 && Math.random() < m.critChance) {
-      bonus += critSurplus(damage + bonus, m.critMultiplier);
-    }
-
-    if (bonus > 0) {
       try {
-        victim.applyDamage(bonus, { cause: EntityDamageCause.override, damagingEntity: attacker });
+        hurtEntity.applyDamage(critSurplus(damage, m.critMultiplier), {
+          cause: EntityDamageCause.override,
+          damagingEntity: attacker,
+        });
       } catch {
         /* victime invalide */
       }
     }
-    if (m.bleedChance > 0 && Math.random() < m.bleedChance) {
-      try {
-        victim.addEffect('wither', 60, { amplifier: 0, showParticles: true });
-      } catch {
-        /* immunisé */
-      }
-    }
-    if (m.heavyKnockbackChance > 0 && Math.random() < m.heavyKnockbackChance) {
-      this.knockbackAway(attacker, victim);
+
+    // Débuff au choix, 3–5 s.
+    if (m.debuffEffect && m.debuffChance > 0 && Math.random() < m.debuffChance) {
+      const ticks = 60 + Math.floor(Math.random() * 41); // 60–100 ticks = 3–5 s
+      this.tryEffect(hurtEntity, m.debuffEffect, ticks, 0);
     }
   }
 
-  private handleVictim(victim: Entity, cause: EntityDamageCause, damage: number): void {
-    if (!(victim instanceof Player)) return;
-    const m = resolveCombatModifiers(this.repo.load(victim.id).levels);
-
-    let healBack = 0;
-    if (cause === EntityDamageCause.fall) {
-      healBack = damage * m.fallDamageReductionPct;
-    } else if (m.evasionChance > 0 && Math.random() < m.evasionChance) {
-      healBack = damage; // esquive : on annule rétroactivement le coup
-    } else {
-      healBack = damage * m.healBackReductionPct;
-      if (m.bastionShieldReductionPct > 0 && hasShieldOffhand(victim)) {
-        healBack = Math.max(healBack, damage * m.bastionShieldReductionPct);
-      }
-    }
-
-    if (healBack > 0) heal(victim, healBack);
-  }
-
-  private knockbackAway(attacker: Entity, victim: Entity): void {
-    const dx = victim.location.x - attacker.location.x;
-    const dz = victim.location.z - attacker.location.z;
-    const len = Math.hypot(dx, dz) || 1;
+  private tryEffect(target: Entity, effectId: string, ticks: number, amplifier: number): void {
     try {
-      victim.applyKnockback(dx / len, dz / len, 1.5, 0.3);
+      target.addEffect(effectId, ticks, { amplifier, showParticles: true });
     } catch {
-      /* entité non déplaçable */
+      /* cible immunisée / invalide */
     }
   }
 }

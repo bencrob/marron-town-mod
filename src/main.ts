@@ -34,7 +34,7 @@ const movement = new MovementHandler(repo);
 const mining = new MiningHandler(repo);
 
 // Menu principal et boutique se référencent mutuellement (navigation Retour).
-const menu: MenuController = new MenuController(repo, clock, (player) => shop.open(player));
+const menu: MenuController = new MenuController(repo, clock, items, (player) => shop.open(player));
 const shop: ShopController = new ShopController(
   repo,
   worldStore,
@@ -102,10 +102,10 @@ world.afterEvents.playerBreakBlock.subscribe((event) => {
 // 40 ticks (2 s) : attribution des points + (ré)application des effets passifs.
 system.runInterval(() => {
   guard('award-points', () => awardPoints.run());
-  guard('passives', () => passives.tick());
+  guard('passives', () => passives.tick(system.currentTick));
 }, 40);
 
-// 2 ticks : perks d'input (double saut, dash, second souffle).
+// 2 ticks : perks d'input (double saut, dash).
 system.runInterval(() => {
   guard('movement', () => movement.tick());
 }, 2);
