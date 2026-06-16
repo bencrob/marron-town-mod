@@ -12,9 +12,11 @@ export interface SkillRepository {
   /** Vrai si le joueur a déjà un enregistrement (pour l'init baseline). */
   isInitialized(playerId: string): boolean;
 
-  /** Masque 5 bits des achats boutique de la rotation courante. */
-  getShopMask(playerId: string): number;
-  setShopMask(playerId: string, mask: number): void;
+  /** Nombre d'achats effectués pour un slot boutique de la rotation courante. */
+  getShopBuyCount(playerId: string, slot: number): number;
+  setShopBuyCount(playerId: string, slot: number, count: number): void;
+  /** Remet à zéro les compteurs d'achat (nouvelle rotation). */
+  resetShopBuys(playerId: string): void;
 
   /** Le joueur a-t-il déjà possédé un Grimoire (pour le rendre à la mort) ? */
   hasOwnedGrimoire(playerId: string): boolean;

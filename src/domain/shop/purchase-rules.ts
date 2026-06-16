@@ -1,29 +1,37 @@
+import { type Rarity } from './shop-catalog';
+
 /**
- * DOMAINE PUR — règles d'achat boutique. « Acheté » est suivi par un masque 5 bits
- * (slots 0–4), mappé en infrastructure sur les scoreboards marrontown_shop_b_[0-4].
+ * DOMAINE PUR — règles d'achat boutique (V2). Chaque offre est achetable un nombre limité de
+ * fois par jour selon sa rareté (commun 3×, rare 1×). Le compteur par slot est remis à 0 à
+ * chaque nouvelle rotation quotidienne.
  */
-export function isBought(mask: number, slot: number): boolean {
-  return (mask & (1 << slot)) !== 0;
+export function maxBuysFor(rarity: Rarity): number {
+  return rarity === 'rare' ? 1 : 3;
 }
 
-export function canBuy(unspentPoints: number, price: number, mask: number, slot: number): boolean {
-  return !isBought(mask, slot) && unspentPoints >= price;
+export function canBuy(
+  unspentPoints: number,
+  price: number,
+  boughtCount: number,
+  maxBuys: number,
+): boolean {
+  return boughtCount < maxBuys && unspentPoints >= price;
 }
 
 export interface PurchaseResult {
   readonly unspentPoints: number;
-  readonly mask: number;
+  readonly boughtCount: number;
   readonly ok: boolean;
 }
 
 export function applyPurchase(
   unspentPoints: number,
   price: number,
-  mask: number,
-  slot: number,
+  boughtCount: number,
+  maxBuys: number,
 ): PurchaseResult {
-  if (!canBuy(unspentPoints, price, mask, slot)) {
-    return { unspentPoints, mask, ok: false };
+  if (!canBuy(unspentPoints, price, boughtCount, maxBuys)) {
+    return { unspentPoints, boughtCount, ok: false };
   }
-  return { unspentPoints: unspentPoints - price, mask: mask | (1 << slot), ok: true };
+  return { unspentPoints: unspentPoints - price, boughtCount: boughtCount + 1, ok: true };
 }

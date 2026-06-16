@@ -11,18 +11,16 @@ import {
   seededPick,
   type ShopOffer,
 } from '../domain/shop/shop-rotation';
-import { canBuy, applyPurchase } from '../domain/shop/purchase-rules';
-import { isBought } from '../domain/shop/purchase-rules';
+import { canBuy, applyPurchase, maxBuysFor } from '../domain/shop/purchase-rules';
 import { formatHHMM, SEPARATOR } from '../domain/ui/progress-bar';
 
 const SEED_KEY = 'marrontown_shop_seed';
 const TS_KEY = 'marrontown_shop_ts';
-const SOUND = { open: 'random.click', buy: 'random.pop', error: 'note.bass' } as const;
+const SOUND = { buy: 'random.pop', error: 'note.bass' } as const;
 
 /**
- * Boutique rotative 12h. La graine (monde) détermine la sélection ; les achats sont
- * « une fois par rotation par joueur » (masque réinitialisé quand le joueur découvre une
- * nouvelle rotation).
+ * Boutique rotative quotidienne (24h). Graine monde déterministe ; achats 1–3×/jour selon
+ * la rareté (compteur par slot remis à 0 à la rotation). Temps restant affiché à l'ouverture.
  */
 export class ShopController {
   constructor(
@@ -38,18 +36,16 @@ export class ShopController {
     const offers = this.currentOffers(now);
     this.resetIfNewRotation(player.id, now);
 
-    const mask = this.repo.getShopMask(player.id);
     const points = this.repo.load(player.id).unspentPoints;
-    const rotation = formatHHMM(msUntilNextRotation(now));
-
     const form = new ActionFormData()
-      .title(`§l§6Boutique — Rotation dans §e${rotation}`)
+      .title(`§l§6Boutique — Rotation dans §e${formatHHMM(msUntilNextRotation(now))}`)
       .body(`${SEPARATOR}\n§e✦ ${points} points disponibles`);
 
     for (const offer of offers) {
+      const max = maxBuysFor(offer.item.rarity);
+      const bought = this.repo.getShopBuyCount(player.id, offer.slot);
       const color = offer.item.rarity === 'rare' ? '§b' : '§f';
-      const status = isBought(mask, offer.slot) ? '§7[ACHETÉ]' : '§a[DISPO]';
-      form.button(`${color}${offer.item.label} §e${offer.price} pts ${status}`);
+      form.button(`${color}${offer.item.label} §e${offer.price} pts §7[${bought}/${max}]`, offer.item.icon);
     }
     form.button('§7← Retour');
 
@@ -63,12 +59,10 @@ export class ShopController {
     await this.open(player);
   }
 
-  /** Sélection courante : reseed au niveau monde si la rotation est périmée. */
+  /** Sélection courante : reseed monde si la rotation (24h) est périmée. */
   private currentOffers(now: number): ShopOffer[] {
     let seed = this.worldStore.getNumber(SEED_KEY);
-    // L'horodatage est stocké en SECONDES (les scoreboards sont des entiers 32 bits ;
-    // les millisecondes de Date.now() dépasseraient la borne ±2 147 483 647).
-    const ts = (this.worldStore.getNumber(TS_KEY) ?? 0) * 1000;
+    const ts = (this.worldStore.getNumber(TS_KEY) ?? 0) * 1000; // stocké en secondes
     if (seed === undefined || isRotationStale(now, ts)) {
       seed = Math.floor(Math.random() * 0x7fffffff);
       this.worldStore.setNumber(SEED_KEY, seed);
@@ -77,25 +71,25 @@ export class ShopController {
     return seededPick(seed);
   }
 
-  /** Réinitialise les achats du joueur s'il entre dans une nouvelle rotation. */
   private resetIfNewRotation(playerId: string, now: number): void {
     const current = rotationIndex(now);
     if (this.repo.getShopRotationSeen(playerId) !== current) {
-      this.repo.setShopMask(playerId, 0);
+      this.repo.resetShopBuys(playerId);
       this.repo.setShopRotationSeen(playerId, current);
     }
   }
 
   private tryBuy(player: Player, offer: ShopOffer): void {
     const state = this.repo.load(player.id);
-    const mask = this.repo.getShopMask(player.id);
-    if (!canBuy(state.unspentPoints, offer.price, mask, offer.slot)) {
+    const max = maxBuysFor(offer.item.rarity);
+    const bought = this.repo.getShopBuyCount(player.id, offer.slot);
+    if (!canBuy(state.unspentPoints, offer.price, bought, max)) {
       player.playSound(SOUND.error);
       return;
     }
-    const result = applyPurchase(state.unspentPoints, offer.price, mask, offer.slot);
+    const result = applyPurchase(state.unspentPoints, offer.price, bought, max);
     this.repo.save(player.id, { ...state, unspentPoints: result.unspentPoints });
-    this.repo.setShopMask(player.id, result.mask);
+    this.repo.setShopBuyCount(player.id, offer.slot, result.boughtCount);
     this.items.giveItem(player.id, offer.item.id, offer.item.count);
     player.playSound(SOUND.buy);
   }

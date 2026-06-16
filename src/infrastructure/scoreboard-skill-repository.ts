@@ -94,20 +94,16 @@ export class ScoreboardSkillRepository implements SkillRepository {
     return readScore(OBJ.maxLevel, playerId) !== undefined;
   }
 
-  getShopMask(playerId: string): number {
-    let mask = 0;
-    for (let slot = 0; slot < 5; slot++) {
-      if ((readScore(SHOP_SLOT_OBJ(slot), playerId) ?? 0) !== 0) {
-        mask |= 1 << slot;
-      }
-    }
-    return mask;
+  getShopBuyCount(playerId: string, slot: number): number {
+    return readScore(SHOP_SLOT_OBJ(slot), playerId) ?? 0;
   }
 
-  setShopMask(playerId: string, mask: number): void {
-    for (let slot = 0; slot < 5; slot++) {
-      writeScore(SHOP_SLOT_OBJ(slot), playerId, (mask >> slot) & 1);
-    }
+  setShopBuyCount(playerId: string, slot: number, count: number): void {
+    writeScore(SHOP_SLOT_OBJ(slot), playerId, count);
+  }
+
+  resetShopBuys(playerId: string): void {
+    for (let slot = 0; slot < 5; slot++) writeScore(SHOP_SLOT_OBJ(slot), playerId, 0);
   }
 
   hasOwnedGrimoire(playerId: string): boolean {

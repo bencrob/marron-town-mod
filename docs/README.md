@@ -33,7 +33,8 @@ dans une **boutique** qui change tout le temps. 🎮
 | [✨ Progression](progression.md) | Comment gagner des points, et ce que tu perds en mourant |
 | [🌳 Compétences](competences.md) | Les 4 arbres, les choix d'effets et les objets offerts |
 | [💱 Échange](echange.md) | Échanger des ressources contre des points (+ bonus quotidien) |
-| [🏪 Boutique](boutique.md) | La boutique tournante et comment en profiter |
+| [🏪 Boutique](boutique.md) | La boutique quotidienne et comment en profiter |
+| [♻️ Reset (Gomme)](reset.md) | Tout recommencer + la règle du lait |
 
 ---
 

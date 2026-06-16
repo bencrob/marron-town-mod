@@ -4,7 +4,7 @@ import { SHOP_CATALOG, type ShopItem } from './shop-catalog';
  * DOMAINE PUR — rotation 12h déterministe. Le timing dépend de `nowMs` (injecté),
  * la sélection dépend uniquement de `seed` → 100 % reproductible et testable.
  */
-export const ROTATION_PERIOD_MS = 12 * 60 * 60 * 1000;
+export const ROTATION_PERIOD_MS = 24 * 60 * 60 * 1000;
 
 export function rotationIndex(ms: number, periodMs: number = ROTATION_PERIOD_MS): number {
   return Math.floor(ms / periodMs);

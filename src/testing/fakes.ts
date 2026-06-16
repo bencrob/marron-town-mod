@@ -39,11 +39,14 @@ export class InMemorySkillRepository implements SkillRepository {
   isInitialized(playerId: string): boolean {
     return this.states.has(playerId);
   }
-  getShopMask(playerId: string): number {
-    return this.masks.get(playerId) ?? 0;
+  getShopBuyCount(playerId: string, slot: number): number {
+    return this.masks.get(`${playerId}:${slot}`) ?? 0;
   }
-  setShopMask(playerId: string, mask: number): void {
-    this.masks.set(playerId, mask);
+  setShopBuyCount(playerId: string, slot: number, count: number): void {
+    this.masks.set(`${playerId}:${slot}`, count);
+  }
+  resetShopBuys(playerId: string): void {
+    for (let slot = 0; slot < 5; slot++) this.masks.delete(`${playerId}:${slot}`);
   }
   hasOwnedGrimoire(playerId: string): boolean {
     return this.owned.has(playerId);
