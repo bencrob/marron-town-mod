@@ -31,10 +31,9 @@ describe('resolvePassiveEffects (nerf modéré)', () => {
     expect(amp(resolvePassiveEffects(levels({ agility: 40 })), 'speed')).toBe(1);
   });
 
-  test('haste plafonné à I (amp 1) même attaque 40 + minage 100', () => {
-    const fx = resolvePassiveEffects(levels({ attack: 40, mining: 100 }));
-    expect(amp(fx, 'haste')).toBe(1);
-    expect(fx.filter((e) => e.effectId === 'haste')).toHaveLength(1);
+  test('l’attaque ne donne plus de haste (bug corrigé) ; le minage oui (plafonné à I)', () => {
+    expect(amp(resolvePassiveEffects(levels({ attack: 100 })), 'haste')).toBeUndefined();
+    expect(amp(resolvePassiveEffects(levels({ mining: 100 })), 'haste')).toBe(1);
   });
 
   test('résistance 80 → Resist II (amp 1) + regen/absorption/fire', () => {

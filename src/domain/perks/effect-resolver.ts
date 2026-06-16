@@ -45,20 +45,21 @@ export interface Capabilities {
 
 /** Effets passifs à (ré)appliquer ; doublons fusionnés en gardant l'amplificateur max. */
 export function resolvePassiveEffects(levels: Levels): PassiveEffect[] {
-  const { agility: ag, attack: at, defense: de, mining: mi } = levels;
+  const { agility: ag, defense: de, mining: mi } = levels;
   const raw: PassiveEffect[] = [];
 
-  // Nerf modéré : vitesse plafonnée à II, paliers plus exigeants.
+  // Vitesse plafonnée à II. (L'arbre Attaque ne donne PLUS de haste : c'était un bug,
+  // le boost de minage appartient au Minage.)
   if (ag >= 10) raw.push({ effectId: 'speed', amplifier: ag >= 40 ? 1 : 0 });
   if (ag >= 20) raw.push({ effectId: 'jump_boost', amplifier: 0 });
-
-  if (at >= 10) raw.push({ effectId: 'haste', amplifier: at >= 40 ? 1 : 0 });
 
   if (de >= 10) raw.push({ effectId: 'resistance', amplifier: de >= 50 ? 1 : 0 });
   if (de >= 20) raw.push({ effectId: 'regeneration', amplifier: 0 });
   if (de >= 40) raw.push({ effectId: 'absorption', amplifier: 0 });
   if (de >= 60) raw.push({ effectId: 'fire_resistance', amplifier: 0 });
 
+  // Haste plafonné à I (≤1) → jamais de cassage instantané → l'animation de minage
+  // reste visible quel que soit le niveau (correctif #1).
   if (mi >= 10) raw.push({ effectId: 'haste', amplifier: mi >= 50 ? 1 : 0 });
 
   // Fusion par effet : amplificateur maximum.
